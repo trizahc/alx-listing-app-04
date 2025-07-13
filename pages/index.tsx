@@ -1,28 +1,61 @@
-import { PROPERTYLISTINGSAMPLE } from "@/constants";
-import { PropertyProps } from "@/interfaces";
-import Image from "next/image";
-import Pill from "@/components/Pill";
+import { useEffect, useState } from "react";
+import Head from "next/head";
+import axios from "axios";
+import Card from "@/components/common/Card";
 
 export default function Home() {
+  const [properties, setProperties] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchListings = async () => {
+      try {
+        const response = await axios.get("http://localhost:8000/api/listings/");
+        setProperties(response.data);
+      } catch (err) {
+        console.error(err);
+        setError("Failed to load listings.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchListings();
+  }, []);
+
   return (
-    <div>
-      {/* Hero Section */}
-      <section className="relative bg-blue-100 h-[300px] flex items-center justify-center text-center">
-        <div className="absolute inset-0 bg-cover bg-center opacity-30" style={{ backgroundImage: "url('https://via.placeholder.com/1200x400')" }}></div>
-        <div className="relative z-10">
-          <h1 className="text-3xl font-bold text-gray-800">Find your favorite place here!</h1>
-          <p className="text-lg text-gray-700 mt-2">The best prices for over 2 million properties worldwide.</p>
-          import Pill from "@/components/Pill"; // Make sure this is at the top of your file
+    <>
+      <Head>
+        <title>ALX Listing App</title>
+      </Head>
 
-// Inside the return() JSX of your Home page
-<div className="flex flex-wrap gap-3 mt-6">
-  {["Top Villa", "Self Checkin", "Countryside", "Beachfront", "Rooms"].map((label, index) => (
-    <Pill key={index} label={label} />
-  ))}
-</div>
+      <main className="max-w-6xl mx-auto px-6 py-10">
+        <h1 className="text-3xl font-bold mb-6 text-gray-800">
+          Available Properties
+        </h1>
 
-        </div>
-      </section>
-    </div>
+        {loading && <p className="text-gray-500">Loading listings...</p>}
+        {error && <p className="text-red-500">{error}</p>}
+
+        {!loading && !error && (
+          <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+            {properties.map((property) => (
+              <Card
+                key={property.id}
+                id={property.id}
+                title={property.name}
+                description={property.description || "No description provided."}
+                imageUrl={property.image || "/fallback.jpg"}
+                onClick={() => {
+                  // You can navigate to /property/[id] here
+                  console.log("Clicked", property.id);
+                }}
+              />
+            ))}
+          </div>
+        )}
+      </main>
+    </>
   );
 }
